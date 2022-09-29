@@ -1,22 +1,86 @@
 import { useEffect, useState } from 'react'
 import { useKeyPress } from 'react-use'
+import useKeyboardJs from 'react-use/lib/useKeyboardJs'
+import {KeysPressed} from '../objects/types'
 
 export const useControls = () => {
   const [forward] = useKeyPress('w')
+  const [forwardLeft] = useKeyboardJs('w + a');
+  const [forwardRight] = useKeyboardJs('w + d');
   const [backward] = useKeyPress('s')
+  const [backwardLeft] = useKeyboardJs('s + a');
+  const [backwardRight] = useKeyboardJs('s + d');
   const [left] = useKeyPress('a')
   const [right] = useKeyPress('d')
-  const [keyPressed, setKeyPressed] = useState(false)
+  const [multipleKeysPressed, setMultipleKeysPressed] = useState(false)
+  const [keysPressed, setKeysPressed] = useState<KeysPressed>({
+    forward: false,
+    forwardLeft: false,
+    forwardRight: false,
+    backward: false,
+    backwardLeft: false,
+    backwardRight: false,
+    left: false,
+    right: false,
+  })
 
   useEffect(() => {
-    right || left || forward || backward ? setKeyPressed(true) : setKeyPressed(false)
-  }, [forward, left, right, backward])
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      forward
+    }))
+   },[forward])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      forwardLeft
+    }))
+  }, [forwardLeft])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      forwardRight
+    }))
+  }, [forwardRight])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      backward
+    }))
+  }, [backward])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      backwardLeft
+    }))
+  }, [backwardLeft])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      backwardRight
+    }))
+  }, [backwardRight])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      left
+    }))
+  }, [left])
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      right
+    }))
+  }, [right])
 
-  return [
-    forward,
-    backward,
-    left,
-    right,
-    keyPressed
-  ]
+  useEffect(() => {
+    const multipleKeysPressed = Object.values(keysPressed).filter((value) => value).length > 1
+
+    setMultipleKeysPressed(multipleKeysPressed)
+  }, [keysPressed])
+
+  return {
+    keysPressed,
+    multipleKeysPressed,
+  }
 }

@@ -18,3 +18,14 @@ export interface Animation {
   name: AnimationName,
   moveSpeed: number,
 }
+
+export interface KeysPressed {
+  forward: boolean,
+  forwardLeft: boolean,
+  forwardRight: boolean,
+  backward: boolean,
+  backwardLeft: boolean,
+  backwardRight: boolean,
+  left: boolean,
+  right: boolean,
+}
