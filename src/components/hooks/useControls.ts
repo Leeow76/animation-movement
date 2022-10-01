@@ -12,7 +12,7 @@ export const useControls = () => {
   const [backwardRight] = useKeyboardJs('s + d')
   const [left] = useKeyPress('a')
   const [right] = useKeyPress('d')
-  const [multipleKeysPressed, setMultipleKeysPressed] = useState(false)
+  const [anyKeyPressed, setAnyKeyPressed] = useState(false)
   const [keysPressed, setKeysPressed] = useState<KeysPressed>({
     forward: false,
     forwardLeft: false,
@@ -74,14 +74,15 @@ export const useControls = () => {
   }, [right])
 
   useEffect(() => {
-    const multipleKeysPressed =
-      Object.values(keysPressed).filter((value) => value).length > 1
+    const anyKeyPressed = Object.values(keysPressed).some(
+      (value) => value === true
+    )
 
-    setMultipleKeysPressed(multipleKeysPressed)
+    setAnyKeyPressed(anyKeyPressed)
   }, [keysPressed])
 
   return {
     keysPressed,
-    multipleKeysPressed,
+    anyKeyPressed,
   }
 }

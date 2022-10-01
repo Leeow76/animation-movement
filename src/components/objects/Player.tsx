@@ -15,6 +15,7 @@ import React, {
   useState,
 } from 'react'
 import * as THREE from 'three'
+import { lerp } from 'three/src/math/MathUtils'
 
 const Player = () => {
   const { camera } = useThree()
@@ -25,7 +26,7 @@ const Player = () => {
   const { scene, animations } = useGLTF('/assets/models/player.glb')
   const { ref, actions } = useAnimations(animations)
   const orbitRef = useRef(null)
-  const { keysPressed, multipleKeysPressed } = useControls()
+  const { keysPressed, anyKeyPressed } = useControls()
 
   // Rotation
   const orbitControlTarget = useMemo(() => new THREE.Vector3(), [])
@@ -39,8 +40,9 @@ const Player = () => {
   const rightAxis = useMemo(() => new THREE.Vector3(-1, 0, 0), [])
 
   // Speeds
-  const walkSpeed = useMemo(() => 1.65, [])
+  const walkSpeed = useMemo(() => 1.55, [])
   const backwardsWalkSpeed = useMemo(() => 1, [])
+  const [accelerationMultiplier, setAccelerationMultiplier] = useState(0)
 
   useEffect(() => {
     if (
@@ -67,6 +69,7 @@ const Player = () => {
   }, [keysPressed])
 
   useEffect(() => {
+    console.log(animation.name)
     actions[animation.name]?.reset().fadeIn(0.5).play()
 
     return () => {
@@ -82,26 +85,39 @@ const Player = () => {
       ;(orbitRef.current as OrbitControlsProps).target = target
       const cameraPosRef = camera.position.sub(ref.current.position)
 
-      keysPressed.forward &&
-        !multipleKeysPressed &&
-        ref.current.translateOnAxis(forwardAxis, animation.moveSpeed * delta)
-      keysPressed.backward &&
-        !multipleKeysPressed &&
-        ref.current.translateOnAxis(backwardAxis, animation.moveSpeed * delta)
-      keysPressed.left &&
-        !multipleKeysPressed &&
-        ref.current.translateOnAxis(leftAxis, animation.moveSpeed * delta)
-      keysPressed.right &&
-        !multipleKeysPressed &&
-        ref.current.translateOnAxis(rightAxis, animation.moveSpeed * delta)
-      keysPressed.forwardRight &&
-        ref.current.translateOnAxis(forwardAxis, animation.moveSpeed * delta)
-      keysPressed.forwardLeft &&
-        ref.current.translateOnAxis(forwardAxis, animation.moveSpeed * delta)
-      keysPressed.backwardLeft &&
-        ref.current.translateOnAxis(backwardAxis, animation.moveSpeed * delta)
-      keysPressed.backwardRight &&
-        ref.current.translateOnAxis(backwardAxis, animation.moveSpeed * delta)
+      anyKeyPressed &&
+        setAccelerationMultiplier(
+          accelerationMultiplier < 0.99
+            ? lerp(accelerationMultiplier, 1, 0.1)
+            : 1
+        )
+      !anyKeyPressed &&
+        setAccelerationMultiplier(
+          accelerationMultiplier > 0.01
+            ? lerp(accelerationMultiplier, 0, 0.1)
+            : 0
+        )
+
+      let axis = forwardAxis
+      let speed = 0
+      if (keysPressed.forward || keysPressed.forwardLeft || keysPressed.forwardRight) {
+        speed = walkSpeed
+      } else if (keysPressed.backward || keysPressed.forwardLeft || keysPressed.backwardLeft) {
+        axis = backwardAxis
+        speed = backwardsWalkSpeed
+      } else if (keysPressed.left) {
+        axis = leftAxis
+        speed = walkSpeed
+      } else if (keysPressed.right) {
+        axis = rightAxis
+        speed = walkSpeed
+      }
+
+      keysPressed &&
+        ref.current.translateOnAxis(
+          axis,
+          speed * accelerationMultiplier * delta
+        )
 
       camera.position.addVectors(ref.current.position, cameraPosRef)
 
@@ -125,7 +141,9 @@ const Player = () => {
         rotationAxis,
         angleYCameraDirection + directionOffset
       )
-      ref.current.quaternion.rotateTowards(rotateQuaternion, 0.2)
+
+      anyKeyPressed &&
+        ref.current.quaternion.rotateTowards(rotateQuaternion, delta * 4)
     }
   })
 
