@@ -1,17 +1,18 @@
 import { KeysPressed } from '../objects/types'
 import { useEffect, useState } from 'react'
-import { useKeyPress } from 'react-use'
 import useKeyboardJs from 'react-use/lib/useKeyboardJs'
 
 export const useControls = () => {
-  const [forward] = useKeyPress('w')
+  const [forward] = useKeyboardJs('w')
   const [forwardLeft] = useKeyboardJs('w + a')
   const [forwardRight] = useKeyboardJs('w + d')
-  const [backward] = useKeyPress('s')
+  const [backward] = useKeyboardJs('s')
   const [backwardLeft] = useKeyboardJs('s + a')
   const [backwardRight] = useKeyboardJs('s + d')
-  const [left] = useKeyPress('a')
-  const [right] = useKeyPress('d')
+  const [left] = useKeyboardJs('a')
+  const [right] = useKeyboardJs('d')
+  const [shift] = useKeyboardJs('shift')
+  const [shiftPressed, setShiftPressed] = useState(false)
   const [anyKeyPressed, setAnyKeyPressed] = useState(false)
   const [keysPressed, setKeysPressed] = useState<KeysPressed>({
     forward: false,
@@ -72,6 +73,9 @@ export const useControls = () => {
       right,
     }))
   }, [right])
+  useEffect(() => {
+    setShiftPressed(shift)
+  }, [shift])
 
   useEffect(() => {
     const anyKeyPressed = Object.values(keysPressed).some(
@@ -83,6 +87,7 @@ export const useControls = () => {
 
   return {
     keysPressed,
+    shiftPressed,
     anyKeyPressed,
   }
 }

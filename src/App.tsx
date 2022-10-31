@@ -5,19 +5,17 @@ import { Stats } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import React from 'react'
 
-const App = () => {
-  return (
-    <Canvas camera={{ position: [0, 4, 6] }} shadows>
-      {/* Misc */}
-      <color attach="background" args={['lightgrey']} />
-      <Stats />
-      <Lights />
+const App = () => (
+  <Canvas camera={{ position: [0, 4, 6] }} shadows>
+    {/* Misc */}
+    <color attach="background" args={['lightgrey']} />
+    <Stats />
+    <Lights />
 
-      {/* Objects */}
-      <Player />
-      <Floor />
-    </Canvas>
-  )
-}
+    {/* Objects */}
+    <Player />
+    <Floor />
+  </Canvas>
+)
 
 export default App

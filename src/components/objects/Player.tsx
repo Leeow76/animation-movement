@@ -1,4 +1,5 @@
 import { useControls } from '../hooks/useControls'
+import { useControls as useLevaControls } from 'leva'
 import { Animation } from './types'
 import {
   OrbitControls,
@@ -19,6 +20,17 @@ import { lerp } from 'three/src/math/MathUtils'
 
 const Player = () => {
   const { camera } = useThree()
+  const {
+    WALK_SPEED,
+    WALK_BACKWARDS_SPEED,
+    RUN_SPEED,
+    RUN_BACKWARDS_SPEED,
+  } = useLevaControls('Movement speeds', {
+    WALK_SPEED: { label: 'Walk', value: 1.55},
+    WALK_BACKWARDS_SPEED: { label: 'Walk back', value: 1},
+    RUN_SPEED: { label: 'Run', value: 4},
+    RUN_BACKWARDS_SPEED: { label: 'Run back', value: 2.5},
+  })
   const [animation, setAnimation] = useState<Animation>({
     name: 'idle',
     moveSpeed: 0,
@@ -26,7 +38,7 @@ const Player = () => {
   const { scene, animations } = useGLTF('/assets/models/player.glb')
   const { ref, actions } = useAnimations(animations)
   const orbitRef = useRef(null)
-  const { keysPressed, anyKeyPressed } = useControls()
+  const { keysPressed, anyKeyPressed, shiftPressed } = useControls()
 
   // Rotation
   const orbitControlTarget = useMemo(() => new THREE.Vector3(), [])
@@ -40,8 +52,6 @@ const Player = () => {
   const rightAxis = useMemo(() => new THREE.Vector3(-1, 0, 0), [])
 
   // Speeds
-  const walkSpeed = useMemo(() => 1.55, [])
-  const backwardsWalkSpeed = useMemo(() => 1, [])
   const [accelerationMultiplier, setAccelerationMultiplier] = useState(0)
 
   useEffect(() => {
@@ -50,26 +60,37 @@ const Player = () => {
       keysPressed.forwardRight ||
       keysPressed.forwardLeft
     ) {
-      !actions['walk_forward']?.isRunning() &&
-        setAnimation({ name: 'walk_forward', moveSpeed: walkSpeed })
+      if (shiftPressed && animation.name !== 'run_forward') {
+        setAnimation({ name: 'run_forward', moveSpeed: RUN_SPEED })
+      }
+      if (!shiftPressed && animation.name !== 'walk_forward') {
+        setAnimation({ name: 'walk_forward', moveSpeed: WALK_SPEED })
+      }
     } else if (
       keysPressed.backward ||
       keysPressed.backwardRight ||
       keysPressed.backwardLeft
     ) {
-      !actions['walk_backward']?.isRunning() &&
-        setAnimation({ name: 'walk_backward', moveSpeed: backwardsWalkSpeed })
+      if (shiftPressed && animation.name !== 'run_backward') {
+        setAnimation({ name: 'run_backward', moveSpeed: RUN_BACKWARDS_SPEED })
+      }
+      if (!shiftPressed && animation.name !== 'walk_backward') {
+        setAnimation({ name: 'walk_backward', moveSpeed: WALK_BACKWARDS_SPEED })      
+      }
     } else if (keysPressed.left) {
-      setAnimation({ name: 'walk_left', moveSpeed: walkSpeed })
+      shiftPressed ?
+        setAnimation({ name: 'run_left', moveSpeed: RUN_SPEED }) :
+        setAnimation({ name: 'walk_left', moveSpeed: WALK_SPEED })
     } else if (keysPressed.right) {
-      setAnimation({ name: 'walk_right', moveSpeed: walkSpeed })
+      shiftPressed ?
+        setAnimation({ name: 'run_right', moveSpeed: RUN_SPEED }) :
+        setAnimation({ name: 'walk_right', moveSpeed: WALK_SPEED })
     } else {
       setAnimation({ name: 'idle', moveSpeed: 0 })
     }
-  }, [keysPressed])
+  }, [keysPressed, shiftPressed])
 
   useEffect(() => {
-    console.log(animation.name)
     actions[animation.name]?.reset().fadeIn(0.5).play()
 
     return () => {
@@ -85,38 +106,36 @@ const Player = () => {
       ;(orbitRef.current as OrbitControlsProps).target = target
       const cameraPosRef = camera.position.sub(ref.current.position)
 
+      // Smooth acceleration
       anyKeyPressed &&
         setAccelerationMultiplier(
           accelerationMultiplier < 0.99
-            ? lerp(accelerationMultiplier, 1, 0.1)
+            ? lerp(accelerationMultiplier, animation.moveSpeed, 0.05)
             : 1
         )
       !anyKeyPressed &&
         setAccelerationMultiplier(
           accelerationMultiplier > 0.01
-            ? lerp(accelerationMultiplier, 0, 0.1)
+            ? lerp(accelerationMultiplier, 0, 0.05)
             : 0
         )
 
+      // Move in direction, speed
       let axis = forwardAxis
-      let speed = 0
       if (keysPressed.forward || keysPressed.forwardLeft || keysPressed.forwardRight) {
-        speed = walkSpeed
-      } else if (keysPressed.backward || keysPressed.forwardLeft || keysPressed.backwardLeft) {
+        axis = forwardAxis
+      } else if (keysPressed.backward || keysPressed.backwardLeft || keysPressed.backwardRight) {
         axis = backwardAxis
-        speed = backwardsWalkSpeed
       } else if (keysPressed.left) {
         axis = leftAxis
-        speed = walkSpeed
       } else if (keysPressed.right) {
         axis = rightAxis
-        speed = walkSpeed
       }
 
       keysPressed &&
         ref.current.translateOnAxis(
           axis,
-          speed * accelerationMultiplier * delta
+          animation.moveSpeed * accelerationMultiplier * delta
         )
 
       camera.position.addVectors(ref.current.position, cameraPosRef)
@@ -161,6 +180,7 @@ const Player = () => {
         minDistance={3}
         maxDistance={6}
         enablePan={false}
+        onClick={() => console.log('onClick')}
       />
     </primitive>
   )

@@ -11,10 +11,10 @@ const Lights = () => {
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
         shadow-camera-far={20}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
+        shadow-camera-left={-2}
+        shadow-camera-right={2}
+        shadow-camera-top={2}
+        shadow-camera-bottom={-2}
       />
     </>
   )
