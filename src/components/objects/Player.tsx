@@ -17,6 +17,7 @@ import React, {
 } from 'react'
 import * as THREE from 'three'
 import { lerp } from 'three/src/math/MathUtils'
+import {useStore} from '../../store'
 
 const Player = () => {
   const { camera } = useThree()
@@ -137,6 +138,7 @@ const Player = () => {
           axis,
           animation.moveSpeed * accelerationMultiplier * delta
         )
+      useStore.setState({ player: ref.current as THREE.Object3D })
 
       camera.position.addVectors(ref.current.position, cameraPosRef)
 
@@ -177,6 +179,7 @@ const Player = () => {
       <OrbitControls
         ref={orbitRef}
         maxPolarAngle={Math.PI / 2.05}
+        minPolarAngle={Math.PI / 16}
         minDistance={3}
         maxDistance={6}
         enablePan={false}
