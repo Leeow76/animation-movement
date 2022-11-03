@@ -7,7 +7,7 @@ export interface State {
 }
 
 export const initialState: State = {
-  player: new THREE.Object3D()
+  player: new THREE.Object3D(),
 }
 
 export const useStore = create<State>(() => initialState)

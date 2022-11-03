@@ -1,5 +1,6 @@
+// import { lerp } from 'three/src/math/MathUtils'
+import { useStore } from '../../store'
 import { useControls } from '../hooks/useControls'
-import { useControls as useLevaControls } from 'leva'
 import { Animation } from './types'
 import {
   OrbitControls,
@@ -8,6 +9,7 @@ import {
   useGLTF,
 } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
+import { useControls as useLevaControls } from 'leva'
 import React, {
   useEffect,
   useLayoutEffect,
@@ -16,45 +18,74 @@ import React, {
   useState,
 } from 'react'
 import * as THREE from 'three'
-import { lerp } from 'three/src/math/MathUtils'
-import {useStore} from '../../store'
 
 const Player = () => {
-  const { camera } = useThree()
-  const {
-    WALK_SPEED,
-    WALK_BACKWARDS_SPEED,
-    RUN_SPEED,
-    RUN_BACKWARDS_SPEED,
-  } = useLevaControls('Movement speeds', {
-    WALK_SPEED: { label: 'Walk', value: 1.55},
-    WALK_BACKWARDS_SPEED: { label: 'Walk back', value: 1},
-    RUN_SPEED: { label: 'Run', value: 4},
-    RUN_BACKWARDS_SPEED: { label: 'Run back', value: 2.5},
-  })
+  // Leva options controls
+  const { WALK_SPEED, WALK_BACKWARDS_SPEED, RUN_SPEED, RUN_BACKWARDS_SPEED } =
+    useLevaControls(
+      'Movement speeds',
+      {
+        WALK_SPEED: { label: 'Walk', value: 1.55, min: 0.1, max: 10 },
+        WALK_BACKWARDS_SPEED: {
+          label: 'Walk back',
+          value: 1,
+          min: 0.1,
+          max: 10,
+        },
+        RUN_SPEED: { label: 'Run', value: 4, min: 0.1, max: 10 },
+        RUN_BACKWARDS_SPEED: {
+          label: 'Run back',
+          value: 2.5,
+          min: 0.1,
+          max: 10,
+        },
+      },
+      { collapsed: true }
+    )
+  const [{ ACCELERATION_X, ACCELERATION_Z }, set] = useLevaControls(
+    'Movement acceleration',
+    () => ({
+      ACCELERATION_X: { label: 'X', value: 0, min: -1, max: 1 },
+      ACCELERATION_Z: { label: 'Z', value: 0, min: -1, max: 1 },
+    })
+  )
+  const { ANIMATION_SWITCH_DURATION } = useLevaControls(
+    'Animations',
+    {
+      ANIMATION_SWITCH_DURATION: {
+        label: 'Change duration',
+        value: 0.5,
+        min: 0,
+        max: 2,
+      },
+    },
+    { collapsed: true }
+  )
+
+  // Animations
   const [animation, setAnimation] = useState<Animation>({
     name: 'idle',
     moveSpeed: 0,
   })
   const { scene, animations } = useGLTF('/assets/models/player.glb')
   const { ref, actions } = useAnimations(animations)
+
+  // Camera
+  const { camera } = useThree()
   const orbitRef = useRef(null)
+
+  // Keyboard controls
   const { keysPressed, anyKeyPressed, shiftPressed } = useControls()
+
+  // Movement direction
+  const diagonalValue = useMemo(() => Math.sin(0.25 * Math.PI), [])
 
   // Rotation
   const orbitControlTarget = useMemo(() => new THREE.Vector3(), [])
   const rotationAxis = useMemo(() => new THREE.Vector3(0, 1, 0), [])
   const rotateQuaternion = useMemo(() => new THREE.Quaternion(), [])
 
-  // Directions
-  const forwardAxis = useMemo(() => new THREE.Vector3(0, 0, 1), [])
-  const backwardAxis = useMemo(() => new THREE.Vector3(0, 0, -1), [])
-  const leftAxis = useMemo(() => new THREE.Vector3(1, 0, 0), [])
-  const rightAxis = useMemo(() => new THREE.Vector3(-1, 0, 0), [])
-
-  // Speeds
-  const [accelerationMultiplier, setAccelerationMultiplier] = useState(0)
-
+  // Set correct animation
   useEffect(() => {
     if (
       keysPressed.forward ||
@@ -76,70 +107,75 @@ const Player = () => {
         setAnimation({ name: 'run_backward', moveSpeed: RUN_BACKWARDS_SPEED })
       }
       if (!shiftPressed && animation.name !== 'walk_backward') {
-        setAnimation({ name: 'walk_backward', moveSpeed: WALK_BACKWARDS_SPEED })      
+        setAnimation({ name: 'walk_backward', moveSpeed: WALK_BACKWARDS_SPEED })
       }
     } else if (keysPressed.left) {
-      shiftPressed ?
-        setAnimation({ name: 'run_left', moveSpeed: RUN_SPEED }) :
-        setAnimation({ name: 'walk_left', moveSpeed: WALK_SPEED })
+      shiftPressed
+        ? setAnimation({ name: 'run_left', moveSpeed: RUN_SPEED })
+        : setAnimation({ name: 'walk_left', moveSpeed: WALK_SPEED })
     } else if (keysPressed.right) {
-      shiftPressed ?
-        setAnimation({ name: 'run_right', moveSpeed: RUN_SPEED }) :
-        setAnimation({ name: 'walk_right', moveSpeed: WALK_SPEED })
+      shiftPressed
+        ? setAnimation({ name: 'run_right', moveSpeed: RUN_SPEED })
+        : setAnimation({ name: 'walk_right', moveSpeed: WALK_SPEED })
     } else {
       setAnimation({ name: 'idle', moveSpeed: 0 })
     }
   }, [keysPressed, shiftPressed])
 
+  // Fade between animations
   useEffect(() => {
-    actions[animation.name]?.reset().fadeIn(0.5).play()
+    actions[animation.name]?.reset().fadeIn(ANIMATION_SWITCH_DURATION).play()
 
     return () => {
-      actions[animation.name]?.fadeOut(0.5)
+      actions[animation.name]?.fadeOut(ANIMATION_SWITCH_DURATION)
     }
   }, [animation])
 
   useFrame((_, delta) => {
     if (ref.current && orbitRef.current) {
+      // Update orbitControl target dynamically
       const target = orbitControlTarget
         .copy(ref.current.position)
         .setY(ref.current.position.y + 1.5)
       ;(orbitRef.current as OrbitControlsProps).target = target
       const cameraPosRef = camera.position.sub(ref.current.position)
 
-      // Smooth acceleration
-      anyKeyPressed &&
-        setAccelerationMultiplier(
-          accelerationMultiplier < 0.99
-            ? lerp(accelerationMultiplier, animation.moveSpeed, 0.05)
-            : 1
-        )
-      !anyKeyPressed &&
-        setAccelerationMultiplier(
-          accelerationMultiplier > 0.01
-            ? lerp(accelerationMultiplier, 0, 0.05)
-            : 0
-        )
-
-      // Move in direction, speed
-      let axis = forwardAxis
-      if (keysPressed.forward || keysPressed.forwardLeft || keysPressed.forwardRight) {
-        axis = forwardAxis
-      } else if (keysPressed.backward || keysPressed.backwardLeft || keysPressed.backwardRight) {
-        axis = backwardAxis
+      if (keysPressed.forwardLeft) {
+        set({ ACCELERATION_X: diagonalValue })
+        set({ ACCELERATION_Z: diagonalValue })
+      } else if (keysPressed.forwardRight) {
+        set({ ACCELERATION_X: -diagonalValue })
+        set({ ACCELERATION_Z: diagonalValue })
+      } else if (keysPressed.backwardLeft) {
+        set({ ACCELERATION_X: diagonalValue })
+        set({ ACCELERATION_Z: -diagonalValue })
+      } else if (keysPressed.backwardRight) {
+        set({ ACCELERATION_X: -diagonalValue })
+        set({ ACCELERATION_Z: -diagonalValue })
+      } else if (keysPressed.forward) {
+        set({ ACCELERATION_X: 0 })
+        set({ ACCELERATION_Z: 1 })
+      } else if (keysPressed.backward) {
+        set({ ACCELERATION_X: 0 })
+        set({ ACCELERATION_Z: -1 })
       } else if (keysPressed.left) {
-        axis = leftAxis
+        set({ ACCELERATION_X: 1 })
+        set({ ACCELERATION_Z: 0 })
       } else if (keysPressed.right) {
-        axis = rightAxis
+        set({ ACCELERATION_X: -1 })
+        set({ ACCELERATION_Z: 0 })
+      } else {
+        set({ ACCELERATION_X: 0 })
+        set({ ACCELERATION_Z: 0 })
       }
 
-      keysPressed &&
-        ref.current.translateOnAxis(
-          axis,
-          animation.moveSpeed * accelerationMultiplier * delta
-        )
+      ref.current.translateX(ACCELERATION_X * delta * animation.moveSpeed)
+      ref.current.translateZ(ACCELERATION_Z * delta * animation.moveSpeed)
+
+      // Store player to state
       useStore.setState({ player: ref.current as THREE.Object3D })
 
+      // Rotate player based on camera rotation
       camera.position.addVectors(ref.current.position, cameraPosRef)
 
       const angleYCameraDirection = Math.atan2(
@@ -147,21 +183,7 @@ const Player = () => {
         ref.current.position.z - camera.position.z
       )
 
-      let directionOffset = 0
-      if (keysPressed.forwardRight) {
-        directionOffset = -0.25 * Math.PI
-      } else if (keysPressed.forwardLeft) {
-        directionOffset = 0.25 * Math.PI
-      } else if (keysPressed.backwardLeft) {
-        directionOffset = -0.25 * Math.PI
-      } else if (keysPressed.backwardRight) {
-        directionOffset = 0.25 * Math.PI
-      }
-
-      rotateQuaternion.setFromAxisAngle(
-        rotationAxis,
-        angleYCameraDirection + directionOffset
-      )
+      rotateQuaternion.setFromAxisAngle(rotationAxis, angleYCameraDirection)
 
       anyKeyPressed &&
         ref.current.quaternion.rotateTowards(rotateQuaternion, delta * 4)
@@ -183,7 +205,6 @@ const Player = () => {
         minDistance={3}
         maxDistance={6}
         enablePan={false}
-        onClick={() => console.log('onClick')}
       />
     </primitive>
   )
