@@ -1,5 +1,9 @@
-export type AnimationName =
+export type Animation =
   | 'idle'
+  | 'run_forward_left'
+  | 'run_forward_right'
+  | 'run_backward_left'
+  | 'run_backward_right'
   | 'run_forward'
   | 'run_backward'
   | 'run_left'
@@ -9,15 +13,14 @@ export type AnimationName =
   | 'turn_left_90'
   | 'turn_right_180'
   | 'turn_right_90'
+  | 'walk_forward_left'
+  | 'walk_forward_right'
+  | 'walk_backward_left'
+  | 'walk_backward_right'
   | 'walk_forward'
   | 'walk_backward'
   | 'walk_left'
   | 'walk_right'
-
-export interface Animation {
-  name: AnimationName
-  moveSpeed: number
-}
 
 export interface KeysPressed {
   forward: boolean
@@ -28,4 +31,5 @@ export interface KeysPressed {
   backwardRight: boolean
   left: boolean
   right: boolean
+  invalidDirection: boolean
 }

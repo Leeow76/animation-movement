@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react'
 import useKeyboardJs from 'react-use/lib/useKeyboardJs'
 
 export const useControls = () => {
+  const [invalidDirection] = useKeyboardJs([
+    'a + d',
+    'w + s',
+    'a + w + d',
+    'a + s + d',
+  ])
   const [forward] = useKeyboardJs('w')
   const [forwardLeft] = useKeyboardJs('w + a')
   const [forwardRight] = useKeyboardJs('w + d')
@@ -23,8 +29,15 @@ export const useControls = () => {
     backwardRight: false,
     left: false,
     right: false,
+    invalidDirection: false,
   })
 
+  useEffect(() => {
+    setKeysPressed((prevState) => ({
+      ...prevState,
+      invalidDirection,
+    }))
+  }, [invalidDirection])
   useEffect(() => {
     setKeysPressed((prevState) => ({
       ...prevState,

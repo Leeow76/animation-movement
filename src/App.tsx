@@ -10,7 +10,7 @@ const App = () => (
   <>
     <Canvas camera={{ position: [0, 4, 6] }} shadows>
       {/* Misc */}
-      <color attach="background" args={['lightgrey']} />
+      <color attach="background" args={['powderblue']} />
       <Stats />
       <Lights />
 

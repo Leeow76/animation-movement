@@ -1,4 +1,3 @@
-// import { lerp } from 'three/src/math/MathUtils'
 import { useStore } from '../../store'
 import { useControls } from '../hooks/useControls'
 import { Animation } from './types'
@@ -27,6 +26,7 @@ const Player = () => {
     RUN_SPEED,
     RUN_BACKWARDS_SPEED,
     PLAYER_ROTATION_MAX_SPEED,
+    LERP_STEP
   } = useLevaControls(
     'Movement speeds',
     {
@@ -50,15 +50,14 @@ const Player = () => {
         min: 0.5,
         max: 16,
       },
+      LERP_STEP: {
+        label: 'Movement weight',
+        value: 0.1,
+        min: 0.01,
+        max: 1,
+      },
     },
     { collapsed: true }
-  )
-  const [{ ACCELERATION_X, ACCELERATION_Z }, set] = useLevaControls(
-    'Movement acceleration',
-    () => ({
-      ACCELERATION_X: { label: 'X', value: 0, min: -1, max: 1 },
-      ACCELERATION_Z: { label: 'Z', value: 0, min: -1, max: 1 },
-    })
   )
   const { ANIMATION_SWITCH_DURATION } = useLevaControls(
     'Animations',
@@ -73,14 +72,15 @@ const Player = () => {
     { collapsed: true }
   )
 
+  // Lerped move speed values
+  const [xMoveSpeed, setXMoveSpeed] = useState(0)
+  const [zMoveSpeed, setZMoveSpeed] = useState(0)
+  
   // Object3D
   const playerRef = useRef<THREE.Object3D>(null)
 
   // Animations
-  const [animation, setAnimation] = useState<Animation>({
-    name: 'idle',
-    moveSpeed: 0,
-  })
+  const [animation, setAnimation] = useState<Animation>('idle')
   const { scene, animations } = useGLTF('/assets/models/player.glb')
   const { ref, actions } = useAnimations(animations)
 
@@ -101,49 +101,53 @@ const Player = () => {
 
   // Set correct animation
   useEffect(() => {
-    if (
-      keysPressed.forward ||
-      keysPressed.forwardRight ||
-      keysPressed.forwardLeft
-    ) {
-      if (shiftPressed && animation.name !== 'run_forward') {
-        setAnimation({ name: 'run_forward', moveSpeed: RUN_SPEED })
-      }
-      if (!shiftPressed && animation.name !== 'walk_forward') {
-        setAnimation({ name: 'walk_forward', moveSpeed: WALK_SPEED })
-      }
-    } else if (
-      keysPressed.backward ||
-      keysPressed.backwardRight ||
-      keysPressed.backwardLeft
-    ) {
-      if (shiftPressed && animation.name !== 'run_backward') {
-        setAnimation({ name: 'run_backward', moveSpeed: RUN_BACKWARDS_SPEED })
-      }
-      if (!shiftPressed && animation.name !== 'walk_backward') {
-        setAnimation({ name: 'walk_backward', moveSpeed: WALK_BACKWARDS_SPEED })
-      }
+    if (keysPressed.invalidDirection && animation !== 'idle') {
+      setAnimation('idle')
+    } else if (keysPressed.forwardLeft) {
+      shiftPressed
+        ? setAnimation('run_forward_left')
+        : setAnimation('walk_forward_left')
+    } else if (keysPressed.forwardRight) {
+      shiftPressed
+        ? setAnimation('run_forward_right')
+        : setAnimation('walk_forward_right')
+    } else if (keysPressed.backwardLeft) {
+      shiftPressed
+        ? setAnimation('run_backward_left')
+        : setAnimation('walk_backward_left')
+    } else if (keysPressed.backwardRight) {
+      shiftPressed
+        ? setAnimation('run_backward_right')
+        : setAnimation('walk_backward_right')
+    } else if (keysPressed.forward) {
+      shiftPressed
+        ? setAnimation('run_forward')
+        : setAnimation('walk_forward')
+    } else if (keysPressed.backward) {
+      shiftPressed
+        ? setAnimation('run_backward')
+        : setAnimation('walk_backward')
     } else if (keysPressed.left) {
       shiftPressed
-        ? setAnimation({ name: 'run_left', moveSpeed: RUN_SPEED })
-        : setAnimation({ name: 'walk_left', moveSpeed: WALK_SPEED })
+        ? setAnimation('run_left')
+        : setAnimation('walk_left')
     } else if (keysPressed.right) {
       shiftPressed
-        ? setAnimation({ name: 'run_right', moveSpeed: RUN_SPEED })
-        : setAnimation({ name: 'walk_right', moveSpeed: WALK_SPEED })
+        ? setAnimation('run_right')
+        : setAnimation('walk_right')
     } else {
-      if (animation.name !== 'idle') {
-        setAnimation({ name: 'idle', moveSpeed: 0 })
+      if (animation !== 'idle') {
+        setAnimation('idle')
       }
     }
   }, [keysPressed, shiftPressed])
 
   // Fade between animations
   useEffect(() => {
-    actions[animation.name]?.reset().fadeIn(ANIMATION_SWITCH_DURATION).play()
+    actions[animation]?.reset().fadeIn(ANIMATION_SWITCH_DURATION).play()
 
     return () => {
-      actions[animation.name]?.fadeOut(ANIMATION_SWITCH_DURATION)
+      actions[animation]?.fadeOut(ANIMATION_SWITCH_DURATION)
     }
   }, [animation])
 
@@ -158,37 +162,82 @@ const Player = () => {
       // Store camera offset from player position before transforming player position
       const cameraPosRef = camera.position.sub(playerRef.current.position)
 
-      if (keysPressed.forwardLeft) {
-        set({ ACCELERATION_X: diagonalValue })
-        set({ ACCELERATION_Z: diagonalValue })
+      // Lerp player movement values toward desired speeds
+      if (keysPressed.invalidDirection) {
+        setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+        setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
+      } else if (keysPressed.forwardLeft) {
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
+        }
       } else if (keysPressed.forwardRight) {
-        set({ ACCELERATION_X: -diagonalValue })
-        set({ ACCELERATION_Z: diagonalValue })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
+        }
       } else if (keysPressed.backwardLeft) {
-        set({ ACCELERATION_X: diagonalValue })
-        set({ ACCELERATION_Z: -diagonalValue })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+        }
       } else if (keysPressed.backwardRight) {
-        set({ ACCELERATION_X: -diagonalValue })
-        set({ ACCELERATION_Z: -diagonalValue })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+        }
       } else if (keysPressed.forward) {
-        set({ ACCELERATION_X: 0 })
-        set({ ACCELERATION_Z: 1 })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, RUN_SPEED, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, WALK_SPEED, LERP_STEP))
+        }
       } else if (keysPressed.backward) {
-        set({ ACCELERATION_X: 0 })
-        set({ ACCELERATION_Z: -1 })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED, LERP_STEP))
+        }
       } else if (keysPressed.left) {
-        set({ ACCELERATION_X: 1 })
-        set({ ACCELERATION_Z: 0 })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, RUN_SPEED, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, WALK_SPEED, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
+        }
       } else if (keysPressed.right) {
-        set({ ACCELERATION_X: -1 })
-        set({ ACCELERATION_Z: 0 })
+        if (shiftPressed) {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_SPEED, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
+        } else {
+          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_SPEED, LERP_STEP))
+          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
+        }
       } else {
-        set({ ACCELERATION_X: 0 })
-        set({ ACCELERATION_Z: 0 })
+        setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
+        setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
       }
 
-      playerRef.current.translateX(ACCELERATION_X * delta * animation.moveSpeed)
-      playerRef.current.translateZ(ACCELERATION_Z * delta * animation.moveSpeed)
+      // Translate player X, Z by lerped values
+      playerRef.current.translateX(delta * xMoveSpeed)
+      playerRef.current.translateZ(delta * zMoveSpeed)
 
       // Store player to state
       useStore.setState({ player: playerRef.current as THREE.Object3D })
@@ -209,6 +258,7 @@ const Player = () => {
 
       // Copy visual model position from player object3D position
       ref.current.position.copy(playerRef.current.position)
+      ref.current.scale.copy(playerRef.current.scale)
 
       // Smoothly rotate model quaternion to forward facing direction
       anyKeyPressed &&
