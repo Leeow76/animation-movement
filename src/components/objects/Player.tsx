@@ -51,10 +51,10 @@ const Player = () => {
         max: 16,
       },
       LERP_STEP: {
-        label: 'Movement weight',
+        label: 'Acceleration-deceleration rate',
         value: 0.1,
         min: 0.01,
-        max: 1,
+        max: 0.3,
       },
     },
     { collapsed: true }
