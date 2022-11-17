@@ -5,7 +5,6 @@ const { merge } = require('webpack-merge')
 const common = require('./webpack.common')
 const JavascriptObfuscator = require('webpack-obfuscator')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const { InjectManifest } = require('workbox-webpack-plugin')
 
 const prod = {
   mode: 'production',
@@ -35,10 +34,6 @@ const prod = {
       },
       ['vendors.*.js']
     ),
-    new InjectManifest({
-      swSrc: path.resolve(__dirname, 'pwa/sw.js'),
-      maximumFileSizeToCacheInBytes: 11000000,
-    }),
   ],
 }
 
