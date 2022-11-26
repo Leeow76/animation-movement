@@ -10,3 +10,28 @@ body,
     margin: 0;
     padding: 0;
 }
+
+.controls-info__box {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.5em 1em;
+    margin: 1em;
+    background: skyblue;
+    border-radius: 0.5em;
+    opacity: 0.75;
+    min-width: 300px;
+}
+
+.controls-info__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1em;
+    margin: 0;
+    padding: 0.5em 0;
+    border-bottom: 1px solid powderblue;
+}
+
+.controls-info__row:last-child {
+    border-bottom: none;
+}

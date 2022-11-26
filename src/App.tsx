@@ -1,3 +1,4 @@
+import ControlsInfo from './components/misc/ControlsInfo'
 import Lights from './components/misc/Lights'
 import Floor from './components/objects/Floor'
 import Player from './components/objects/Player'
@@ -20,6 +21,8 @@ const App = () => (
       </Suspense>
     </Canvas>
     <Loader />
+
+    <ControlsInfo />
 
     <Leva oneLineLabels />
   </>
