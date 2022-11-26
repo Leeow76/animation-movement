@@ -94,7 +94,7 @@ const Lights = () => {
         intensity={DIRECTIONAL_LIGHT_INTENSITY}
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        shadow-camera-far={16}
+        shadow-camera-far={32}
         shadow-camera-left={-2}
         shadow-camera-right={2}
         shadow-camera-top={2}
