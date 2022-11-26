@@ -26,7 +26,7 @@ const Player = () => {
     RUN_SPEED,
     RUN_BACKWARDS_SPEED,
     PLAYER_ROTATION_MAX_SPEED,
-    LERP_STEP
+    LERP_STEP,
   } = useLevaControls(
     'Movement speeds',
     {
@@ -75,7 +75,7 @@ const Player = () => {
   // Lerped move speed values
   const [xMoveSpeed, setXMoveSpeed] = useState(0)
   const [zMoveSpeed, setZMoveSpeed] = useState(0)
-  
+
   // Object3D
   const playerRef = useRef<THREE.Object3D>(null)
 
@@ -120,21 +120,15 @@ const Player = () => {
         ? setAnimation('run_backward_right')
         : setAnimation('walk_backward_right')
     } else if (keysPressed.forward) {
-      shiftPressed
-        ? setAnimation('run_forward')
-        : setAnimation('walk_forward')
+      shiftPressed ? setAnimation('run_forward') : setAnimation('walk_forward')
     } else if (keysPressed.backward) {
       shiftPressed
         ? setAnimation('run_backward')
         : setAnimation('walk_backward')
     } else if (keysPressed.left) {
-      shiftPressed
-        ? setAnimation('run_left')
-        : setAnimation('walk_left')
+      shiftPressed ? setAnimation('run_left') : setAnimation('walk_left')
     } else if (keysPressed.right) {
-      shiftPressed
-        ? setAnimation('run_right')
-        : setAnimation('walk_right')
+      shiftPressed ? setAnimation('run_right') : setAnimation('walk_right')
     } else {
       if (animation !== 'idle') {
         setAnimation('idle')
@@ -168,35 +162,131 @@ const Player = () => {
         setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
       } else if (keysPressed.forwardLeft) {
         if (shiftPressed) {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              RUN_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              RUN_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         } else {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              WALK_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              WALK_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         }
       } else if (keysPressed.forwardRight) {
         if (shiftPressed) {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, RUN_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              -RUN_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              RUN_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         } else {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, WALK_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              -WALK_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              WALK_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         }
       } else if (keysPressed.backwardLeft) {
         if (shiftPressed) {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              RUN_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              -RUN_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         } else {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              WALK_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              -WALK_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         }
       } else if (keysPressed.backwardRight) {
         if (shiftPressed) {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              -RUN_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              -RUN_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         } else {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED * diagonalValue, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(
+              xMoveSpeed,
+              -WALK_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(
+              zMoveSpeed,
+              -WALK_BACKWARDS_SPEED * diagonalValue,
+              LERP_STEP
+            )
+          )
         }
       } else if (keysPressed.forward) {
         if (shiftPressed) {
@@ -209,10 +299,14 @@ const Player = () => {
       } else if (keysPressed.backward) {
         if (shiftPressed) {
           setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED, LERP_STEP))
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(zMoveSpeed, -RUN_BACKWARDS_SPEED, LERP_STEP)
+          )
         } else {
           setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, 0, LERP_STEP))
-          setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED, LERP_STEP))
+          setZMoveSpeed(
+            THREE.MathUtils.lerp(zMoveSpeed, -WALK_BACKWARDS_SPEED, LERP_STEP)
+          )
         }
       } else if (keysPressed.left) {
         if (shiftPressed) {
@@ -227,7 +321,9 @@ const Player = () => {
           setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -RUN_SPEED, LERP_STEP))
           setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
         } else {
-          setXMoveSpeed(THREE.MathUtils.lerp(xMoveSpeed, -WALK_SPEED, LERP_STEP))
+          setXMoveSpeed(
+            THREE.MathUtils.lerp(xMoveSpeed, -WALK_SPEED, LERP_STEP)
+          )
           setZMoveSpeed(THREE.MathUtils.lerp(zMoveSpeed, 0, LERP_STEP))
         }
       } else {
@@ -282,9 +378,9 @@ const Player = () => {
       <primitive rotation={[0, Math.PI, 0]} ref={ref} object={scene}>
         <OrbitControls
           ref={orbitRef}
-          maxPolarAngle={Math.PI / 2.05}
-          minPolarAngle={Math.PI / 16}
-          minDistance={3}
+          maxPolarAngle={Math.PI / 1.8}
+          minPolarAngle={Math.PI / 24}
+          minDistance={2.5}
           maxDistance={6}
           enablePan={false}
           enableDamping={false}

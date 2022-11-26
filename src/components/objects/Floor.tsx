@@ -9,13 +9,13 @@ const Floor = () => {
       const texture = txt as THREE.Texture
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping
       texture.offset.set(0, 0)
-      texture.repeat.set(4, 4)
+      texture.repeat.set(48, 48)
     }
   )
 
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <planeGeometry attach="geometry" args={[16, 16]} />
+      <planeGeometry attach="geometry" args={[256, 256]} />
       <meshStandardMaterial map={texture} attach="material" />
     </mesh>
   )
