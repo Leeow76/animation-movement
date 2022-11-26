@@ -27,13 +27,13 @@ const Lights = () => {
       },
       AMBIENT_LIGHT_INTENSITY: {
         label: 'Ambient light intensity',
-        value: 0.5,
+        value: 0.3,
         min: 0,
         max: 3,
       },
       SKY_SUN_POSITION: {
         label: 'Sky light position',
-        value: [-3, 4, -2.5],
+        value: [-10, 7, -10],
       },
       MIE_COEFFICIENT: {
         label: 'Sky Mie coefficient',
